@@ -1,5 +1,7 @@
 import { DataSource } from "typeorm";
 import User from "./entities/user";
+import Post from "./entities/post";
+import Tag from "./entities/tag";
 
 export const AppDatasource = new DataSource({
   type: "postgres",
@@ -9,5 +11,6 @@ export const AppDatasource = new DataSource({
   password: "postgres",
   database: "blogDb",
   synchronize: true,
-  entities: [User],
+  // dropSchema: true,
+  entities: [User, Post, Tag],
 });
