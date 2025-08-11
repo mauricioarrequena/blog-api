@@ -1,7 +1,7 @@
 import { Repository } from "typeorm";
-import Post from "../entities/post";
-import Tag from "../entities/tag";
-import User from "../entities/user";
+import Post from "../../entities/post";
+import Tag from "../../entities/tag";
+import User from "../../entities/user";
 
 export class PostService {
   constructor(
@@ -19,7 +19,10 @@ export class PostService {
     try {
       const allTags = await this.tagRepository.find();
       const tags = allTags.filter((tag) => tagIds.includes(tag.id));
-      const user = (await this.userRepository.findOne({ where: { id: userId } }))!;
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) {
+        throw new Error(`user with id ${userId} does not exist`);
+      }
       const newPost = new Post();
       newPost.title = title;
       newPost.content = content;

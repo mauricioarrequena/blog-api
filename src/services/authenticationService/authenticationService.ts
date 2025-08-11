@@ -1,6 +1,6 @@
 import { Repository } from "typeorm";
 import bcrypt from "bcrypt";
-import User from "../entities/user";
+import User from "../../entities/user";
 
 export default class AuthenticationService {
   constructor(private userRepository: Repository<User>) {}
