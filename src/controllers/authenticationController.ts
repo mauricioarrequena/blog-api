@@ -1,7 +1,7 @@
 import { Request, Response, Router } from "express";
 import http from "http";
 import bcrypt from "bcrypt";
-import AuthenticationService from "../services/authenticationService";
+import AuthenticationService from "../services/authenticationService/authenticationService";
 import { AppDatasource } from "../dataSource";
 import jwt from "jsonwebtoken";
 

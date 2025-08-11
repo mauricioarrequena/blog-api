@@ -4,7 +4,7 @@ import {
   authenticateToken,
   AuthenticationRequest,
 } from "../middlewares/authenticationMmiddlware";
-import { PostService } from "../services/postService";
+import { PostService } from "../services/postService/postService";
 import { AppDatasource } from "../dataSource";
 
 export class PostController {
@@ -30,7 +30,12 @@ export class PostController {
     }
 
     try {
-      const post = await this.postService.createPost(title, content, tags, userId);
+      const post = await this.postService.createPost(
+        title,
+        content,
+        tags,
+        userId
+      );
       res.status(201).json(post);
     } catch (error) {
       res.status(503).send(http.STATUS_CODES[503]);
