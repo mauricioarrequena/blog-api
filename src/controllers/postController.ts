@@ -6,6 +6,7 @@ import {
 } from "../middlewares/authenticationMmiddlware";
 import { PostService } from "../services/postService/postService";
 import { AppDatasource } from "../dataSource";
+import { PostDto } from "../dtos/posts/postDto";
 
 export class PostController {
   public router = Router();
@@ -36,9 +37,19 @@ export class PostController {
         tags,
         userId
       );
-      res.status(201).json(post);
+      const postDto = this.toPostDto(post.id, post.title, post.content);
+      res.status(201).json(postDto);
     } catch (error) {
       res.status(503).send(http.STATUS_CODES[503]);
     }
+  }
+
+  private toPostDto(id: number, title: string, content: string) {
+    const postDto: PostDto = {
+      id,
+      title,
+      content,
+    };
+    return postDto;
   }
 }
