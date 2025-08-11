@@ -1,6 +1,7 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import Post from "./post";
 
-@Entity()
+@Entity("users")
 export default class User {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -10,4 +11,13 @@ export default class User {
 
   @Column()
   passwordHash!: string;
+
+  @OneToMany(() => Post, (post) => post.user)
+  posts!: Post[];
+
+  @Column()
+  createdAt: Date = new Date();
+
+  @Column()
+  updatedAt: Date = new Date();
 }

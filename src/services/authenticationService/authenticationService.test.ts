@@ -2,7 +2,7 @@ jest.mock("bcrypt");
 import { Repository } from "typeorm";
 import bcrypt from "bcrypt";
 import AuthenticationService from "./authenticationService";
-import User from "../entities/user";
+import User from "../../entities/user";
 
 describe("authenticationService", () => {
   let userRepository: jest.Mocked<Repository<User>>;

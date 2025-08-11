@@ -1,13 +1,11 @@
 import { Request, Response, Router } from "express";
 import http from "http";
 import bcrypt from "bcrypt";
-import AuthenticationService from "../services/authenticationService";
+import AuthenticationService from "../services/authenticationService/authenticationService";
 import { AppDatasource } from "../dataSource";
 import jwt from "jsonwebtoken";
 
 export class AuthenticationController {
-  JWT_SECRET = "your_jwt_secret_here";
-
   public router = Router();
   private authenticationService: AuthenticationService;
 
@@ -52,7 +50,7 @@ export class AuthenticationController {
 
       const token = jwt.sign(
         { userId: user.id, email: user.email },
-        this.JWT_SECRET,
+        process.env.JWT_SECRET as string,
         { expiresIn: "1h" }
       );
       res.json({ token });
