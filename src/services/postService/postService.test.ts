@@ -21,6 +21,26 @@ const mockCraetedPost = {
   user: mockFoundUser,
 } as Post;
 const mockError = new Error("db error");
+const mockFoundPost = {
+  id: 1,
+  title: "post title",
+  content: "psot content",
+} as Post;
+const mockFindAndCoutResult: [Post[], number] = [
+  [
+    {
+      id: 1,
+      title: "post title",
+      content: "psot content",
+    } as Post,
+    {
+      id: 2,
+      title: "post title2",
+      content: "psot content2",
+    } as Post,
+  ],
+  2,
+];
 
 describe("postService", () => {
   let tagRepotisory: jest.Mocked<Repository<Tag>>;
@@ -142,6 +162,167 @@ describe("postService", () => {
       );
 
       expect(tagIdsInput).toEqual(originalTagIdsCopy);
+    });
+  });
+
+  describe("getPostById", () => {
+    beforeEach(() => {
+      tagRepotisory = { find: jest.fn() } as any;
+      userRepository = { findOne: jest.fn() } as any;
+      postRepository = { findOne: jest.fn() } as any;
+      postService = new PostService(
+        postRepository,
+        tagRepotisory,
+        userRepository
+      );
+    });
+
+    it("should return he corect post with valid postId", async () => {
+      postRepository.findOne.mockResolvedValue(mockFoundPost);
+      const postId = 1;
+
+      const result = await postService.getPostById(postId);
+
+      expect(result?.id).toBe(1);
+    });
+
+    it("should return null when postId does not exist", async () => {
+      postRepository.findOne.mockResolvedValue(null);
+      const postId = 999;
+
+      const result = await postService.getPostById(postId);
+
+      expect(result).toBe(null);
+    });
+
+    it("it should handle erros", async () => {
+      postRepository.findOne.mockRejectedValue(mockError);
+      const postId = 999;
+
+      await expect(postService.getPostById(postId)).rejects.toThrow(
+        new Error("db error")
+      );
+    });
+
+    it("should call finOne method", async () => {
+      postRepository.findOne.mockResolvedValue(mockFoundPost);
+      const postId = 1;
+
+      await postService.getPostById(postId);
+
+      expect(postRepository.findOne).toHaveBeenCalledTimes(1);
+    });
+
+    it("should call findOne with the correct query object", async () => {
+      postRepository.findOne.mockResolvedValue(mockFoundPost);
+      const postId = 1;
+
+      await postService.getPostById(postId);
+
+      expect(postRepository.findOne).toHaveBeenCalledWith({
+        where: { id: postId },
+      });
+    });
+  });
+
+  describe("getPaginatedPosts", () => {
+    beforeEach(() => {
+      tagRepotisory = { find: jest.fn() } as any;
+      userRepository = { findOne: jest.fn() } as any;
+      postRepository = { findAndCount: jest.fn() } as any;
+      postService = new PostService(
+        postRepository,
+        tagRepotisory,
+        userRepository
+      );
+    });
+
+    it("shold return a list of posts and total count", async () => {
+      postRepository.findAndCount.mockResolvedValue(mockFindAndCoutResult);
+
+      const [posts, totalPosts] = await postService.getPaginatedPosts();
+
+      expect(posts).toEqual([
+        {
+          id: 1,
+          title: "post title",
+          content: "psot content",
+        } as Post,
+        {
+          id: 2,
+          title: "post title2",
+          content: "psot content2",
+        } as Post,
+      ]);
+      expect(totalPosts).toBe(2);
+    });
+
+    it("should calculate skip", async () => {
+      postRepository.findAndCount.mockResolvedValue(mockFindAndCoutResult);
+
+      await postService.getPaginatedPosts(2, 10);
+
+      expect(postRepository.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 10,
+          take: 10,
+        })
+      );
+    });
+
+    it("should return posts ordered by createdAt descending", async () => {
+      postRepository.findAndCount.mockResolvedValue(mockFindAndCoutResult);
+
+      await postService.getPaginatedPosts();
+
+      expect(postRepository.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          order: { createdAt: "DESC" },
+        })
+      );
+    });
+
+    it("should use dafault valid values", async () => {
+      postRepository.findAndCount.mockResolvedValue(mockFindAndCoutResult);
+
+      await postService.getPaginatedPosts();
+
+      expect(postRepository.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 0,
+          take: 5,
+        })
+      );
+    });
+
+    it("shoud propagate repository errors", async () => {
+      postRepository.findAndCount.mockRejectedValue(mockError);
+
+      await expect(postService.getPaginatedPosts()).rejects.toThrow(
+        new Error("db error")
+      );
+    });
+
+    it("should call findAndAcoutn", async () => {
+      postRepository.findAndCount.mockResolvedValue(mockFindAndCoutResult);
+
+      await postService.getPaginatedPosts();
+
+      expect(postRepository.findAndCount).toHaveBeenCalledTimes(1);
+    });
+
+    it("should call findAndAcoutn with the correct object", async () => {
+      postRepository.findAndCount.mockResolvedValue(mockFindAndCoutResult);
+
+      await postService.getPaginatedPosts();
+
+      expect(postRepository.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 0,
+          take: 5,
+          order: { createdAt: "DESC" },
+        })
+      );
     });
   });
 });
