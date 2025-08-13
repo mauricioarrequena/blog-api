@@ -16,6 +16,7 @@ export class PostController {
     this.router.post("/", authenticateToken, this.postPost.bind(this));
     this.router.get("/", authenticateToken, this.getPosts.bind(this));
     this.router.get("/:postId", authenticateToken, this.getPost.bind(this));
+    this.router.put("/:postId", authenticateToken, this.updatePost.bind(this));
     this.postService = new PostService(
       AppDatasource.getRepository("Post"),
       AppDatasource.getRepository("Tag"),
@@ -39,7 +40,13 @@ export class PostController {
         tags,
         userId
       );
-      const postDto = this.toPostDto(post.id, post.title, post.content);
+      const postDto = this.toPostDto(
+        post.id,
+        post.title,
+        post.content,
+        post.createdAt,
+        post.updatedAt
+      );
       res.status(201).json(postDto);
     } catch (error) {
       res.status(503).send(http.STATUS_CODES[503]);
@@ -54,7 +61,13 @@ export class PostController {
       if (!post) {
         return res.status(404).json(http.STATUS_CODES[404]);
       }
-      const postDto = this.toPostDto(post.id, post.title, post.content);
+      const postDto = this.toPostDto(
+        post.id,
+        post.title,
+        post.content,
+        post.createdAt,
+        post.updatedAt
+      );
       res.json(postDto);
     } catch (error) {
       res.status(503).send(http.STATUS_CODES[503]);
@@ -84,12 +97,43 @@ export class PostController {
     }
   }
 
-  private toPostDto(id: number, title: string, content: string) {
+  public async updatePost(req: Request, res: Response) {
+    const userId = (req as AuthenticationRequest).user.userId;
+    const postChanges = req.body;
+
+    try {
+      const updatedPost = await this.postService.udpatePost(
+        userId,
+        postChanges
+      );
+      const postDto = this.toPostDto(
+        updatedPost.id,
+        updatedPost.title,
+        updatedPost.content,
+        updatedPost.createdAt,
+        updatedPost.updatedAt
+      );
+      res.status(200).json(postDto);
+    } catch (error) {
+      res.status(503).send(http.STATUS_CODES[503]);
+    }
+  }
+
+  private toPostDto(
+    id: number,
+    title: string,
+    content: string,
+    createdAt: Date,
+    updatedAt: Date
+  ) {
     const postDto: PostDto = {
       id,
       title,
       content,
+      createdAt,
+      updatedAt,
     };
+
     return postDto;
   }
 }

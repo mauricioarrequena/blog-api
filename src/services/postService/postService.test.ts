@@ -41,6 +41,21 @@ const mockFindAndCoutResult: [Post[], number] = [
   ],
   2,
 ];
+const mockUpdatePostUserOwner = {
+  id: 1,
+  email: "user1false@example.com",
+} as User;
+const mockUpdatePost = {
+  id: 1,
+  title: "post title",
+  content: "psot content",
+  userId: mockUpdatePostUserOwner.id,
+} as Post;
+const mockPostChanges = {
+  id: 1,
+  title: "a updated title",
+  content: "a updated content",
+} as Post;
 
 describe("postService", () => {
   let tagRepotisory: jest.Mocked<Repository<Tag>>;
@@ -323,6 +338,87 @@ describe("postService", () => {
           order: { createdAt: "DESC" },
         })
       );
+    });
+  });
+
+  describe("updatePost", () => {
+    beforeEach(() => {
+      userRepository = { findOne: jest.fn() } as any;
+      postRepository = { findOne: jest.fn(), save: jest.fn() } as any;
+      postService = new PostService(
+        postRepository,
+        tagRepotisory,
+        userRepository
+      );
+    });
+
+    it("should update a post successfully", async () => {
+      userRepository.findOne.mockResolvedValue(mockUpdatePostUserOwner);
+      postRepository.findOne.mockResolvedValue(mockUpdatePost);
+      postRepository.save.mockImplementation(async (post) => post as Post);
+      const userId = 1;
+
+      const result = await postService.udpatePost(userId, mockPostChanges);
+
+      expect(result).toEqual({
+        id: 1,
+        title: "a updated title",
+        content: "a updated content",
+        userId: 1,
+        updatedAt: expect.any(Date),
+      });
+    });
+
+    it("should throw an error if the user is not foudn", async () => {
+      userRepository.findOne.mockResolvedValue(null);
+      const userId = 999;
+
+      await expect(
+        postService.udpatePost(userId, mockPostChanges)
+      ).rejects.toThrow(new Error("user not found"));
+    });
+
+    it("should throw an error if the post is not found", async () => {
+      userRepository.findOne.mockResolvedValue(mockUpdatePostUserOwner);
+      postRepository.findOne.mockResolvedValue(null);
+      const userId = 1;
+      const postNotFoundError = new Error("post not found");
+
+      await expect(
+        postService.udpatePost(userId, mockPostChanges)
+      ).rejects.toThrow(postNotFoundError);
+    });
+
+    it("should throw an error if the user found is not ther owner of the psot", async () => {
+      const notOwnerUser = { id: 999, email: "user999@example.com" } as User;
+      userRepository.findOne.mockResolvedValue(notOwnerUser);
+      postRepository.findOne.mockResolvedValue(mockUpdatePost);
+      const notOwnerError = new Error("user is not owner of this post");
+
+      await expect(
+        postService.udpatePost(notOwnerUser.id, mockPostChanges)
+      ).rejects.toThrow(notOwnerError);
+    });
+
+    it("should not modify the postChanges object", async () => {
+      userRepository.findOne.mockResolvedValue(mockUpdatePostUserOwner);
+      postRepository.findOne.mockResolvedValue(mockUpdatePost);
+      postRepository.save.mockResolvedValue(mockPostChanges);
+      const postChangesCopy = { ...mockPostChanges };
+
+      await postService.udpatePost(1, mockPostChanges);
+
+      return expect(mockPostChanges).toEqual(postChangesCopy);
+    });
+
+    it("should should call the repository save method", async () => {
+      userRepository.findOne.mockResolvedValue(mockUpdatePostUserOwner);
+      postRepository.findOne.mockResolvedValue(mockUpdatePost);
+      postRepository.save.mockResolvedValue(mockPostChanges);
+
+      await postService.udpatePost(1, mockPostChanges);
+
+      expect(postRepository.save).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -59,4 +59,31 @@ export class PostService {
       throw new Error((error as Error).message);
     }
   }
+
+  public async udpatePost(userId: number, postChanges: Post) {
+    try {
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) {
+        throw new Error("user not found");
+      }
+      const post = await this.postRepository.findOne({
+        where: { id: postChanges.id },
+      });
+      if (!post) {
+        throw new Error("post not found");
+      }
+      if (post.userId != user.id) {
+        throw new Error("user is not owner of this post");
+      }
+      const updatedPost: Post = {
+        ...post,
+        ...postChanges,
+        updatedAt: new Date(),
+      };
+
+      return await this.postRepository.save(updatedPost);
+    } catch (error) {
+      throw new Error((error as Error).message);
+    }
+  }
 }
