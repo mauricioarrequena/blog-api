@@ -35,4 +35,28 @@ export class PostService {
       throw new Error((error as Error).message);
     }
   }
+
+  public async getPostById(postId: number): Promise<Post | null> {
+    try {
+      return await this.postRepository.findOne({ where: { id: postId } });
+    } catch (error) {
+      throw new Error((error as Error).message);
+    }
+  }
+
+  public async getPaginatedPosts(
+    page: number = 1,
+    limit: number = 5
+  ): Promise<[Post[], number]> {
+    try {
+      const skippedRows = (page - 1) * limit;
+      return await this.postRepository.findAndCount({
+        skip: skippedRows,
+        take: limit,
+        order: { createdAt: "DESC" },
+      });
+    } catch (error) {
+      throw new Error((error as Error).message);
+    }
+  }
 }
